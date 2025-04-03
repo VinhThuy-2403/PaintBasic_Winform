@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Linq;
@@ -341,6 +342,18 @@ namespace Paint
             }    
         }
 
+        private void btnGroup_Click(object sender, EventArgs e)
+        {
+            selectionManager.GroupSelectedObjects(lstObjects);
+            plMain.Invalidate();
+        }
+
+        private void btnUnGroup_Click(object sender, EventArgs e)
+        {
+            selectionManager.UngroupSelectedObjects(lstObjects);
+            plMain.Invalidate();
+        }
+
         private void plMain_MouseMove(object sender, MouseEventArgs e)
         {
             if (this.isPress)
@@ -378,6 +391,8 @@ namespace Paint
             if (!this.isPress) return;
 
             this.isPress = false;
+            isMovingObject = false;
+            isScaling = false;
 
             if (isMovingObject)
             {
@@ -472,8 +487,17 @@ namespace Paint
                     return new SolidBrush(myPen.Color);
             }
         }
+        public virtual Rectangle GetBounds() { return new Rectangle(); }
 
+        public abstract void Move(int deltaX, int deltaY);
 
+        public virtual void UpdateBounds()
+        {
+            // Cập nhật p1, p2 dựa trên GetBounds()
+            var bounds = GetBounds();
+            p1 = new Point(bounds.Left, bounds.Top);
+            p2 = new Point(bounds.Right, bounds.Bottom);
+        }
     };
 
     public class clsComplexObject : clsDrawObject
@@ -486,6 +510,16 @@ namespace Paint
                     lstObject[i].Draw(myGp);
                }      
         }
+        public override void Move(int deltaX, int deltaY)
+        {
+            foreach (var obj in lstObject)
+            {
+                obj.Move(deltaX, deltaY);
+            }
+            UpdateBounds();
+        }
+
+
     };
 
     public class clsLine : clsDrawObject
@@ -495,7 +529,13 @@ namespace Paint
         {
             myGp.DrawLine(myPen, this.p1, this.p2);
         }
-        
+        public override void Move(int deltaX, int deltaY)
+        {
+            p1.X += deltaX;
+            p1.Y += deltaY;
+            p2.X += deltaX;
+            p2.Y += deltaY;
+        }
     };
 
     public class clsRec : clsDrawObject
@@ -518,7 +558,13 @@ namespace Paint
             }
             g.DrawRectangle(myPen, rect);
         }
-
+        public override void Move(int deltaX, int deltaY)
+        {
+            p1.X += deltaX;
+            p1.Y += deltaY;
+            p2.X += deltaX;
+            p2.Y += deltaY;
+        }
 
     };
 
@@ -541,6 +587,13 @@ namespace Paint
             }
             g.DrawEllipse(myPen, ellipse);
         }
+        public override void Move(int deltaX, int deltaY)
+        {
+            p1.X += deltaX;
+            p1.Y += deltaY;
+            p2.X += deltaX;
+            p2.Y += deltaY;
+        }
     }
 
     //Hinh vuong
@@ -562,6 +615,13 @@ namespace Paint
                 }
             }
             g.DrawRectangle(myPen, square);
+        }
+        public override void Move(int deltaX, int deltaY)
+        {
+            p1.X += deltaX;
+            p1.Y += deltaY;
+            p2.X += deltaX;
+            p2.Y += deltaY;
         }
     }
     //Hinhtron
@@ -587,6 +647,13 @@ namespace Paint
 
             // Vẽ viền
             g.DrawEllipse(myPen, circle);
+        }
+        public override void Move(int deltaX, int deltaY)
+        {
+            p1.X += deltaX;
+            p1.Y += deltaY;
+            p2.X += deltaX;
+            p2.Y += deltaY;
         }
     }
 
@@ -623,6 +690,15 @@ namespace Paint
         public List<Point> GetPoints()
         {
             return new List<Point>(points);
+        }
+
+        public override void Move(int deltaX, int deltaY)
+        {
+            for (int i = 0; i < points.Count; i++)
+            {
+                points[i] = new Point(points[i].X + deltaX, points[i].Y + deltaY);
+            }
+            UpdateBounds(); // Cập nhật lại p1, p2
         }
     }
 
@@ -699,8 +775,97 @@ namespace Paint
                 p2 = new Point(points.Max(p => p.X), points.Max(p => p.Y));
             }
         }
+
+        public override void Move(int deltaX, int deltaY)
+        {
+            for (int i = 0; i < points.Count; i++)
+            {
+                points[i] = new Point(points[i].X + deltaX, points[i].Y + deltaY);
+            }
+            UpdateBounds(); // Cập nhật lại p1, p2
+        }
     }
 
+
+    //group hình
+    public class clsGroup : clsDrawObject
+    {
+        // Thay đổi từ field private thành public hoặc thêm setter
+        public List<clsDrawObject> groupedObjects { get; private set; } = new List<clsDrawObject>();
+
+        // Property chỉ đọc (có thể bỏ nếu không cần)
+        public List<clsDrawObject> GroupedObjects => groupedObjects;
+
+        // Thêm phương thức để thay đổi nội dung group
+        public void SetGroupedObjects(List<clsDrawObject> objects)
+        {
+            groupedObjects = new List<clsDrawObject>(objects);
+            UpdateBounds();
+        }
+
+        public void AddObject(clsDrawObject obj)  // Thêm phương thức mới
+    {
+        groupedObjects.Add(obj);
+        UpdateBounds();
+    }
+
+        public void AddObjects(List<clsDrawObject> objects)
+        {
+            groupedObjects.AddRange(objects);
+            UpdateBounds();
+        }
+
+        public override void Draw(Graphics myGp)
+        {
+            foreach (var obj in groupedObjects)
+            {
+                obj.Draw(myGp);
+            }
+        }
+
+        public override Rectangle GetBounds()
+        {
+            if (groupedObjects.Count == 0) return Rectangle.Empty;
+
+            Rectangle bounds = groupedObjects[0].GetBounds();
+            foreach (var obj in groupedObjects.Skip(1))
+            {
+                bounds = Rectangle.Union(bounds, obj.GetBounds());
+            }
+            return bounds;
+        }
+
+        public override void Move(int deltaX, int deltaY)
+        {
+            foreach (var obj in groupedObjects)
+            {
+                obj.Move(deltaX, deltaY); // Đệ quy di chuyển tất cả thành viên
+            }
+            UpdateBounds();
+        }
+
+        public void UpdateBounds()
+        {
+            if (groupedObjects.Count == 0) return;
+
+            var bounds = GetBounds();
+            p1 = new Point(bounds.Left, bounds.Top);
+            p2 = new Point(bounds.Right, bounds.Bottom);
+        }
+
+        public override bool CanBeFilled() => false;
+        public List<clsDrawObject> GetObjects() => new List<clsDrawObject>(groupedObjects);
+        public void MergeGroup(clsGroup otherGroup)
+        {
+            this.groupedObjects.AddRange(otherGroup.GroupedObjects);
+            UpdateBounds();
+        }
+
+        public bool HasNestedGroups()
+        {
+            return this.groupedObjects.Any(o => o is clsGroup);
+        }
+    }
 
 
     //SelectionManager để quản lý chọn và di chuyển
@@ -719,7 +884,7 @@ namespace Paint
 
         private List<clsDrawObject> selectedObjects = new List<clsDrawObject>();
         private Point selectionStartPoint;
-        private Point offset;
+        //private Point offset;
         private Dictionary<clsDrawObject, Rectangle> originalBounds = new Dictionary<clsDrawObject, Rectangle>();
         private bool isMultiSelectMode = false;
 
@@ -826,6 +991,16 @@ namespace Paint
 
         private bool IsPointInObject(clsDrawObject obj, Point point)
         {
+            if (obj is clsGroup group)
+            {
+                // Kiểm tra từng đối tượng trong group
+                foreach (var innerObj in group.GetObjects())
+                {
+                    if (IsPointInObject(innerObj, point)) return true;
+                }
+                return false;
+            }
+
             if (obj is clsLine line)
             {
                 return IsPointNearLine(line.p1, line.p2, point, 5);
@@ -885,35 +1060,13 @@ namespace Paint
 
             foreach (var obj in selectedObjects)
             {
-                if (obj is clsDaGiac daGiac)
-                {
-                    List<Point> newPoints = new List<Point>();
-                    foreach (Point p in daGiac.GetPoints())
-                    {
-                        newPoints.Add(new Point(p.X + deltaX, p.Y + deltaY));
-                    }
-                    daGiac.SetPoints(newPoints);
-                }
-                else if (obj is clsDuongCong duongCong)
-                {
-                    List<Point> newPoints = new List<Point>();
-                    foreach (Point p in duongCong.GetPoints())
-                    {
-                        newPoints.Add(new Point(p.X + deltaX, p.Y + deltaY));
-                    }
-                    duongCong.SetPoints(newPoints);
-                }
-                else
-                {
-                    obj.p1.X += deltaX;
-                    obj.p1.Y += deltaY;
-                    obj.p2.X += deltaX;
-                    obj.p2.Y += deltaY;
-                }
+                obj.Move(deltaX, deltaY); // Gọi phương thức Move chung
             }
 
             selectionStartPoint = newLocation;
         }
+
+       
 
         public void DrawSelection(Graphics g)
         {
@@ -925,23 +1078,25 @@ namespace Paint
                     selectionPen.DashStyle = DashStyle.Dash;
                     g.DrawRectangle(selectionPen, bounds);
                 }
-            }
 
-            if (selectedObjects.Count == 1)
-            {
-                var bounds = GetObjectBounds(selectedObjects[0]);
-
-                // Vẽ các handle
-                Brush handleBrush = Brushes.White;
-                foreach (ResizeHandle handle in Enum.GetValues(typeof(ResizeHandle)))
+                // Vẽ handle nếu là 1 đối tượng (bao gồm cả group)
+                if (selectedObjects.Count == 1)
                 {
-                    if (handle == ResizeHandle.None) continue;
-
-                    Rectangle handleRect = GetHandleRect(bounds, handle);
-                    g.FillRectangle(handleBrush, handleRect);
-                    g.DrawRectangle(Pens.Black, handleRect);
+                    DrawResizeHandles(g, bounds);
                 }
-            }    
+            }
+        }
+
+        private void DrawResizeHandles(Graphics g, Rectangle bounds)
+        {
+            Brush handleBrush = Brushes.White;
+            foreach (ResizeHandle handle in Enum.GetValues(typeof(ResizeHandle)))
+            {
+                if (handle == ResizeHandle.None) continue;
+                Rectangle handleRect = GetHandleRect(bounds, handle);
+                g.FillRectangle(handleBrush, handleRect);
+                g.DrawRectangle(Pens.Black, handleRect);
+            }
         }
 
         private Rectangle GetHandleRect(Rectangle bounds, ResizeHandle handle)
@@ -990,6 +1145,11 @@ namespace Paint
 
         private Rectangle GetObjectBounds(clsDrawObject obj)
         {
+            if (obj is clsGroup group)
+            {
+                return group.GetBounds();
+            }
+
             if (obj is clsCircle circle)
             {
                 int diameter = Math.Min(Math.Abs(circle.p2.X - circle.p1.X), Math.Abs(circle.p2.Y - circle.p1.Y));
@@ -1009,8 +1169,8 @@ namespace Paint
                 return new Rectangle(
                     Math.Min(line.p1.X, line.p2.X),
                     Math.Min(line.p1.Y, line.p2.Y),
-                    Math.Abs(line.p2.X - line.p1.X),
-                    Math.Abs(line.p2.Y - line.p1.Y));
+                    Math.Max(1, Math.Abs(line.p2.X - line.p1.X)),
+                    Math.Max(1, Math.Abs(line.p2.Y - line.p1.Y)));
             }
             else if (obj is clsDaGiac daGiac)
             {
@@ -1054,7 +1214,7 @@ namespace Paint
             var bounds = GetObjectBounds(obj);
 
             // Đảm bảo kích thước tối thiểu
-            if (bounds.Width < 5 || bounds.Height < 5) return;
+            if (bounds.Width < 2 || bounds.Height < 2) return;
 
             float scaleX = 1f, scaleY = 1f;
             PointF origin = PointF.Empty;
@@ -1067,113 +1227,172 @@ namespace Paint
                     scaleX = (bounds.Right - mousePos.X) / (float)bounds.Width;
                     scaleY = (bounds.Bottom - mousePos.Y) / (float)bounds.Height;
                     origin = new PointF(bounds.Right, bounds.Bottom);
+                    if (maintainAspectRatio) scaleX = scaleY = Math.Min(scaleX, scaleY);
                     break;
                 case ResizeHandle.Top:
                     scaleY = (bounds.Bottom - mousePos.Y) / (float)bounds.Height;
                     origin = new PointF(bounds.Left + bounds.Width / 2f, bounds.Bottom);
+                    if (maintainAspectRatio) scaleX = scaleY;
                     break;
                 case ResizeHandle.TopRight:
+                    scaleX = (mousePos.X - bounds.Left) / (float)bounds.Width;
+                    scaleY = (bounds.Bottom - mousePos.Y) / (float)bounds.Height;
                     origin = new PointF(bounds.Left, bounds.Bottom);
-                    scaleX = Math.Max(0.1f, (mousePos.X - bounds.Left) / (float)Math.Max(1, bounds.Width));
-                    scaleY = Math.Max(0.1f, (bounds.Bottom - mousePos.Y) / (float)Math.Max(1, bounds.Height));
-                    if (maintainAspectRatio) scaleY = scaleX;
+                    if (maintainAspectRatio) scaleX = scaleY = Math.Min(scaleX, scaleY);
                     break;
                 case ResizeHandle.Left:
                     scaleX = (bounds.Right - mousePos.X) / (float)bounds.Width;
                     origin = new PointF(bounds.Right, bounds.Top + bounds.Height / 2f);
-                    break;
-                case ResizeHandle.Right:
-                    origin = new PointF(bounds.Left, bounds.Top + bounds.Height / 2f);
-                    scaleX = Math.Max(0.1f, (mousePos.X - bounds.Left) / (float)Math.Max(1, bounds.Width));
-                    break;
-                case ResizeHandle.BottomLeft:
-                    origin = new PointF(bounds.Right, bounds.Top);
-                    scaleX = Math.Max(0.1f, (bounds.Right - mousePos.X) / (float)Math.Max(1, bounds.Width));
-                    scaleY = Math.Max(0.1f, (mousePos.Y - bounds.Top) / (float)Math.Max(1, bounds.Height));
-                    if (maintainAspectRatio) scaleX = scaleY;
-                    break;
-                case ResizeHandle.Bottom:
-                    origin = new PointF(bounds.Left + bounds.Width / 2f, bounds.Top);
-                    scaleY = Math.Max(0.1f, (mousePos.Y - bounds.Top) / (float)Math.Max(1, bounds.Height));
-                    break;
-                case ResizeHandle.BottomRight:
-                    origin = new PointF(bounds.Left, bounds.Top);
-                    scaleX = Math.Max(0.1f, (mousePos.X - bounds.Left) / (float)Math.Max(1, bounds.Width));
-                    scaleY = Math.Max(0.1f, (mousePos.Y - bounds.Top) / (float)Math.Max(1, bounds.Height));
                     if (maintainAspectRatio) scaleY = scaleX;
                     break;
+                case ResizeHandle.Right:
+                    scaleX = (mousePos.X - bounds.Left) / (float)bounds.Width;
+                    origin = new PointF(bounds.Left, bounds.Top + bounds.Height / 2f);
+                    if (maintainAspectRatio) scaleY = scaleX;
+                    break;
+                case ResizeHandle.BottomLeft:
+                    scaleX = (bounds.Right - mousePos.X) / (float)bounds.Width;
+                    scaleY = (mousePos.Y - bounds.Top) / (float)bounds.Height;
+                    origin = new PointF(bounds.Right, bounds.Top);
+                    if (maintainAspectRatio) scaleX = scaleY = Math.Min(scaleX, scaleY);
+                    break;
+                case ResizeHandle.Bottom:
+                    scaleY = (mousePos.Y - bounds.Top) / (float)bounds.Height;
+                    origin = new PointF(bounds.Left + bounds.Width / 2f, bounds.Top);
+                    if (maintainAspectRatio) scaleX = scaleY;
+                    break;
+                case ResizeHandle.BottomRight:
+                    scaleX = (mousePos.X - bounds.Left) / (float)bounds.Width;
+                    scaleY = (mousePos.Y - bounds.Top) / (float)bounds.Height;
+                    origin = new PointF(bounds.Left, bounds.Top);
+                    if (maintainAspectRatio) scaleX = scaleY = Math.Min(scaleX, scaleY);
+                    break;
             }
 
+            // Giới hạn tỷ lệ scale hợp lý
+            scaleX = Math.Max(0.1f, Math.Min(scaleX, 10f));
+            scaleY = Math.Max(0.1f, Math.Min(scaleY, 10f));
 
-
-            // Áp dụng phép scale
-            if (obj is clsDaGiac daGiac)
-            {
-                ScalePolygon(daGiac, scaleX, scaleY, origin);
-            }
-            else if (obj is clsDuongCong duongCong)
-            {
-                ScalePolygon(duongCong, scaleX, scaleY, origin);
-            }
-            else
-            {
-                ScaleBasicShape(obj, scaleX, scaleY, origin);
-            }
+            ApplyScale(obj, scaleX, scaleY, origin);
         }
 
-        private void ScaleBasicShape(clsDrawObject obj, float scaleX, float scaleY, PointF origin)
+        
+        private void ApplyScale(clsDrawObject obj, float scaleX, float scaleY, PointF origin)
         {
-            PointF p1 = new PointF(obj.p1.X, obj.p1.Y);
-            PointF p2 = new PointF(obj.p2.X, obj.p2.Y);
+            try
+            {
+                if (obj is clsDaGiac daGiac)
+                {
+                    var points = daGiac.GetPoints();
+                    var newPoints = new List<Point>();
 
-            p1 = ScalePoint(p1, scaleX, scaleY, origin);
-            p2 = ScalePoint(p2, scaleX, scaleY, origin);
+                    foreach (var p in points)
+                    {
+                        newPoints.Add(ScalePoint(p, scaleX, scaleY, origin));
+                    }
 
-            obj.p1 = Point.Round(p1);
-            obj.p2 = Point.Round(p2);
+                    daGiac.SetPoints(newPoints);
+                }
+                else if (obj is clsDuongCong duongCong)
+                {
+                    var points = duongCong.GetPoints();
+                    var newPoints = new List<Point>();
+
+                    foreach (var p in points)
+                    {
+                        newPoints.Add(ScalePoint(p, scaleX, scaleY, origin));
+                    }
+
+                    duongCong.SetPoints(newPoints);
+                }
+                else
+                {
+                    Point newP1 = ScalePoint(obj.p1, scaleX, scaleY, origin);
+                    Point newP2 = ScalePoint(obj.p2, scaleX, scaleY, origin);
+
+                    // Kiểm tra kích thước tối thiểu sau scale
+                    if (Math.Abs(newP2.X - newP1.X) >= 2 && Math.Abs(newP2.Y - newP1.Y) >= 2)
+                    {
+                        obj.p1 = newP1;
+                        obj.p2 = newP2;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("Lỗi scale: " + ex.Message);
+            }
         }
 
-        private void ScalePolygon(clsDaGiac polygon, float scaleX, float scaleY, PointF origin)
-        {
-            var points = polygon.GetPoints();
-            var scaledPoints = new List<Point>();
 
-            foreach (var point in points)
+        private Point ScalePoint(Point point, float scaleX, float scaleY, PointF origin)
+        {
+            // Tính toán vị trí mới
+            float newX = origin.X + (point.X - origin.X) * scaleX;
+            float newY = origin.Y + (point.Y - origin.Y) * scaleY;
+
+            // Làm tròn và đảm bảo giá trị không âm
+            return new Point(
+                (int)Math.Round(Math.Max(0, newX)),
+                (int)Math.Round(Math.Max(0, newY))
+            );
+        }
+
+        //Phần group hình
+        public void GroupSelectedObjects(List<clsDrawObject> allObjects)
+        {
+            if (selectedObjects.Count < 2) return;
+
+            // Tạo group mới và thêm TRỰC TIẾP các đối tượng được chọn vào
+            var newGroup = new clsGroup();
+
+            foreach (var obj in selectedObjects)
             {
-                PointF scaledPoint = ScalePoint(new PointF(point.X, point.Y), scaleX, scaleY, origin);
-                scaledPoints.Add(Point.Round(scaledPoint));
+                newGroup.AddObject(obj); // Thêm cả group con nếu có
+                allObjects.Remove(obj);
             }
 
-            polygon.SetPoints(scaledPoints);
+            allObjects.Add(newGroup);
+
+            // Chọn group mới
+            selectedObjects.Clear();
+            selectedObjects.Add(newGroup);
+            originalBounds.Clear();
+            originalBounds[newGroup] = newGroup.GetBounds();
         }
 
-        private void ScalePolygon(clsDuongCong curve, float scaleX, float scaleY, PointF origin)
+        public void UngroupSelectedObjects(List<clsDrawObject> allObjects)
         {
-            var points = curve.GetPoints();
-            var scaledPoints = new List<Point>();
-
-            foreach (var point in points)
+            if (selectedObjects.Count != 1 || !(selectedObjects[0] is clsGroup group))
             {
-                PointF scaledPoint = ScalePoint(new PointF(point.X, point.Y), scaleX, scaleY, origin);
-                scaledPoints.Add(Point.Round(scaledPoint));
+                return;
             }
 
-            curve.SetPoints(scaledPoints);
+            // Lấy tất cả các đối tượng TRỰC TIẾP trong group
+            var children = group.GroupedObjects.ToList();
+
+            // Thêm tất cả ra ngoài
+            foreach (var child in children)
+            {
+                allObjects.Add(child);
+            }
+
+            // Xóa group hiện tại
+            allObjects.Remove(group);
+
+            // Cập nhật selection (chọn tất cả các đối tượng vừa được ungroup)
+            selectedObjects.Clear();
+            originalBounds.Clear();
+
+            selectedObjects.AddRange(children);
+            foreach (var obj in children)
+            {
+                originalBounds[obj] = GetObjectBounds(obj);
+            }
         }
 
-        private PointF ScalePoint(PointF point, float scaleX, float scaleY, PointF origin)
-        {
-            // Dịch chuyển về gốc tọa độ
-            float x = point.X - origin.X;
-            float y = point.Y - origin.Y;
 
-            // Áp dụng scale
-            x *= scaleX;
-            y *= scaleY;
 
-            // Dịch chuyển trở lại vị trí ban đầu
-            return new PointF(x + origin.X, y + origin.Y);
-        }
     }
 
 }

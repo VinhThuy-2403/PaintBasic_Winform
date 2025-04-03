@@ -31,6 +31,7 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
             this.plMain = new System.Windows.Forms.Panel();
             this.panel2 = new System.Windows.Forms.Panel();
+            this.btnGroup = new System.Windows.Forms.Button();
             this.btnDelete = new System.Windows.Forms.Button();
             this.label11 = new System.Windows.Forms.Label();
             this.button1 = new System.Windows.Forms.Button();
@@ -57,6 +58,7 @@
             this.btnColor = new System.Windows.Forms.Button();
             this.btnEllipse = new System.Windows.Forms.Button();
             this.colorDialog1 = new System.Windows.Forms.ColorDialog();
+            this.btnUnGroup = new System.Windows.Forms.Button();
             this.panel2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numDoday)).BeginInit();
             this.SuspendLayout();
@@ -76,6 +78,8 @@
             // panel2
             // 
             this.panel2.BackColor = System.Drawing.SystemColors.GradientActiveCaption;
+            this.panel2.Controls.Add(this.btnUnGroup);
+            this.panel2.Controls.Add(this.btnGroup);
             this.panel2.Controls.Add(this.btnDelete);
             this.panel2.Controls.Add(this.label11);
             this.panel2.Controls.Add(this.button1);
@@ -105,6 +109,16 @@
             this.panel2.Name = "panel2";
             this.panel2.Size = new System.Drawing.Size(1259, 182);
             this.panel2.TabIndex = 1;
+            // 
+            // btnGroup
+            // 
+            this.btnGroup.Location = new System.Drawing.Point(1083, 64);
+            this.btnGroup.Name = "btnGroup";
+            this.btnGroup.Size = new System.Drawing.Size(45, 40);
+            this.btnGroup.TabIndex = 27;
+            this.btnGroup.Text = "group";
+            this.btnGroup.UseVisualStyleBackColor = true;
+            this.btnGroup.Click += new System.EventHandler(this.btnGroup_Click);
             // 
             // btnDelete
             // 
@@ -390,6 +404,16 @@
             this.btnEllipse.UseVisualStyleBackColor = false;
             this.btnEllipse.Click += new System.EventHandler(this.btnEllipse_Click);
             // 
+            // btnUnGroup
+            // 
+            this.btnUnGroup.Location = new System.Drawing.Point(984, 131);
+            this.btnUnGroup.Name = "btnUnGroup";
+            this.btnUnGroup.Size = new System.Drawing.Size(45, 40);
+            this.btnUnGroup.TabIndex = 28;
+            this.btnUnGroup.Text = "UnGroup";
+            this.btnUnGroup.UseVisualStyleBackColor = true;
+            this.btnUnGroup.Click += new System.EventHandler(this.btnUnGroup_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
@@ -437,6 +461,8 @@
         private System.Windows.Forms.Button button1;
         private System.Windows.Forms.Label label11;
         private System.Windows.Forms.Button btnDelete;
+        private System.Windows.Forms.Button btnGroup;
+        private System.Windows.Forms.Button btnUnGroup;
     }
 }
 
