@@ -31,6 +31,7 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
             this.plMain = new System.Windows.Forms.Panel();
             this.panel2 = new System.Windows.Forms.Panel();
+            this.btnUnGroup = new System.Windows.Forms.Button();
             this.btnGroup = new System.Windows.Forms.Button();
             this.btnDelete = new System.Windows.Forms.Button();
             this.label11 = new System.Windows.Forms.Label();
@@ -58,7 +59,6 @@
             this.btnColor = new System.Windows.Forms.Button();
             this.btnEllipse = new System.Windows.Forms.Button();
             this.colorDialog1 = new System.Windows.Forms.ColorDialog();
-            this.btnUnGroup = new System.Windows.Forms.Button();
             this.panel2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numDoday)).BeginInit();
             this.SuspendLayout();
@@ -110,23 +110,36 @@
             this.panel2.Size = new System.Drawing.Size(1259, 182);
             this.panel2.TabIndex = 1;
             // 
+            // btnUnGroup
+            // 
+            this.btnUnGroup.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnUnGroup.Location = new System.Drawing.Point(885, 63);
+            this.btnUnGroup.Name = "btnUnGroup";
+            this.btnUnGroup.Size = new System.Drawing.Size(121, 40);
+            this.btnUnGroup.TabIndex = 28;
+            this.btnUnGroup.Text = "UnGroup";
+            this.btnUnGroup.UseVisualStyleBackColor = true;
+            this.btnUnGroup.Click += new System.EventHandler(this.btnUnGroup_Click);
+            // 
             // btnGroup
             // 
-            this.btnGroup.Location = new System.Drawing.Point(1083, 64);
+            this.btnGroup.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnGroup.Location = new System.Drawing.Point(885, 9);
             this.btnGroup.Name = "btnGroup";
-            this.btnGroup.Size = new System.Drawing.Size(45, 40);
+            this.btnGroup.Size = new System.Drawing.Size(121, 40);
             this.btnGroup.TabIndex = 27;
-            this.btnGroup.Text = "group";
+            this.btnGroup.Text = "Group";
             this.btnGroup.UseVisualStyleBackColor = true;
             this.btnGroup.Click += new System.EventHandler(this.btnGroup_Click);
             // 
             // btnDelete
             // 
-            this.btnDelete.Location = new System.Drawing.Point(957, 52);
+            this.btnDelete.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnDelete.Location = new System.Drawing.Point(885, 118);
             this.btnDelete.Name = "btnDelete";
-            this.btnDelete.Size = new System.Drawing.Size(45, 40);
+            this.btnDelete.Size = new System.Drawing.Size(121, 40);
             this.btnDelete.TabIndex = 2;
-            this.btnDelete.Text = "button2";
+            this.btnDelete.Text = "Delete";
             this.btnDelete.UseVisualStyleBackColor = true;
             this.btnDelete.Click += new System.EventHandler(this.btnDelete_Click);
             // 
@@ -403,16 +416,6 @@
             this.btnEllipse.TabIndex = 2;
             this.btnEllipse.UseVisualStyleBackColor = false;
             this.btnEllipse.Click += new System.EventHandler(this.btnEllipse_Click);
-            // 
-            // btnUnGroup
-            // 
-            this.btnUnGroup.Location = new System.Drawing.Point(984, 131);
-            this.btnUnGroup.Name = "btnUnGroup";
-            this.btnUnGroup.Size = new System.Drawing.Size(45, 40);
-            this.btnUnGroup.TabIndex = 28;
-            this.btnUnGroup.Text = "UnGroup";
-            this.btnUnGroup.UseVisualStyleBackColor = true;
-            this.btnUnGroup.Click += new System.EventHandler(this.btnUnGroup_Click);
             // 
             // Form1
             // 
