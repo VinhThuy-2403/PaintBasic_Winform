@@ -45,7 +45,7 @@ namespace Paint
         //Brush
         public enum BrushType { Solid, Hatch, Gradient }
 
-        // Các biến quản lý brush hiện tại
+        
         private BrushType CurrentBrushType = BrushType.Solid;
         private Color secondaryColor = Color.White;
         private HatchStyle currentHatchStyle = HatchStyle.Cross;
@@ -487,7 +487,15 @@ namespace Paint
                     return new SolidBrush(myPen.Color);
             }
         }
-        public virtual Rectangle GetBounds() { return new Rectangle(); }
+        public virtual Rectangle GetBounds()
+        {
+            return new Rectangle(
+                Math.Min(p1.X, p2.X),
+                Math.Min(p1.Y, p2.Y),
+                Math.Abs(p2.X - p1.X),
+                Math.Abs(p2.Y - p1.Y)
+            );
+        }
 
         public abstract void Move(int deltaX, int deltaY);
 
@@ -700,6 +708,20 @@ namespace Paint
             }
             UpdateBounds(); // Cập nhật lại p1, p2
         }
+
+        public override Rectangle GetBounds()
+        {
+            if (points.Count == 0) return Rectangle.Empty;
+
+            int minX = points.Min(p => p.X);
+            int minY = points.Min(p => p.Y);
+            int maxX = points.Max(p => p.X);
+            int maxY = points.Max(p => p.Y);
+
+            return new Rectangle(minX, minY, maxX - minX, maxY - minY);
+        }
+
+
     }
 
     //Da giac
@@ -784,26 +806,39 @@ namespace Paint
             }
             UpdateBounds(); // Cập nhật lại p1, p2
         }
+
+        // Trong clsDaGiac
+        public override Rectangle GetBounds()
+        {
+            if (points.Count == 0) return Rectangle.Empty;
+
+            int minX = points.Min(p => p.X);
+            int minY = points.Min(p => p.Y);
+            int maxX = points.Max(p => p.X);
+            int maxY = points.Max(p => p.Y);
+
+            return new Rectangle(minX, minY, maxX - minX, maxY - minY);
+        }
+
     }
 
 
     //group hình
     public class clsGroup : clsDrawObject
     {
-        // Thay đổi từ field private thành public hoặc thêm setter
+        
         public List<clsDrawObject> groupedObjects { get; private set; } = new List<clsDrawObject>();
 
-        // Property chỉ đọc (có thể bỏ nếu không cần)
+       
         public List<clsDrawObject> GroupedObjects => groupedObjects;
 
-        // Thêm phương thức để thay đổi nội dung group
         public void SetGroupedObjects(List<clsDrawObject> objects)
         {
             groupedObjects = new List<clsDrawObject>(objects);
             UpdateBounds();
         }
 
-        public void AddObject(clsDrawObject obj)  // Thêm phương thức mới
+        public void AddObject(clsDrawObject obj)  
     {
         groupedObjects.Add(obj);
         UpdateBounds();
@@ -825,28 +860,43 @@ namespace Paint
 
         public override Rectangle GetBounds()
         {
-            if (groupedObjects.Count == 0) return Rectangle.Empty;
+            if (groupedObjects == null || groupedObjects.Count == 0)
+                return Rectangle.Empty;
 
-            Rectangle bounds = groupedObjects[0].GetBounds();
-            foreach (var obj in groupedObjects.Skip(1))
+            int minX = int.MaxValue;
+            int minY = int.MaxValue;
+            int maxX = int.MinValue;
+            int maxY = int.MinValue;
+
+            foreach (var obj in groupedObjects)
             {
-                bounds = Rectangle.Union(bounds, obj.GetBounds());
+                Rectangle objBounds = obj.GetBounds();
+                if (objBounds == Rectangle.Empty) continue;
+
+                minX = Math.Min(minX, objBounds.Left);
+                minY = Math.Min(minY, objBounds.Top);
+                maxX = Math.Max(maxX, objBounds.Right);
+                maxY = Math.Max(maxY, objBounds.Bottom);
             }
-            return bounds;
+
+            if (minX == int.MaxValue || minY == int.MaxValue)
+                return Rectangle.Empty;
+
+            return new Rectangle(minX, minY, maxX - minX, maxY - minY);
         }
 
         public override void Move(int deltaX, int deltaY)
         {
             foreach (var obj in groupedObjects)
             {
-                obj.Move(deltaX, deltaY); // Đệ quy di chuyển tất cả thành viên
+                obj.Move(deltaX, deltaY); 
             }
             UpdateBounds();
         }
 
-        public void UpdateBounds()
+        public override void UpdateBounds()
         {
-            if (groupedObjects.Count == 0) return;
+            if (groupedObjects == null || groupedObjects.Count == 0) return;
 
             var bounds = GetBounds();
             p1 = new Point(bounds.Left, bounds.Top);
@@ -868,7 +918,7 @@ namespace Paint
     }
 
 
-    //SelectionManager để quản lý chọn và di chuyển
+    
     public class SelectionManager
     {
         public enum ResizeHandle
@@ -880,11 +930,11 @@ namespace Paint
         }
 
         private const int HandleSize = 8;
-        private ResizeHandle activeHandle = ResizeHandle.None;
+        
 
         private List<clsDrawObject> selectedObjects = new List<clsDrawObject>();
         private Point selectionStartPoint;
-        //private Point offset;
+       
         private Dictionary<clsDrawObject, Rectangle> originalBounds = new Dictionary<clsDrawObject, Rectangle>();
         private bool isMultiSelectMode = false;
 
@@ -895,25 +945,25 @@ namespace Paint
         {
             if (!isCtrlPressed)
             {
-                // Nếu không giữ Ctrl, xóa tất cả lựa chọn hiện tại
+               
                 selectedObjects.Clear();
                 originalBounds.Clear();
             }
 
-            // Tìm đối tượng được click
+          
             var clickedObject = FindObjectAtLocation(objects, location);
 
             if (clickedObject != null)
             {
                 if (isCtrlPressed && selectedObjects.Contains(clickedObject))
                 {
-                    // Nếu đang giữ Ctrl và click vào đối tượng đã chọn, bỏ chọn nó
+                  
                     selectedObjects.Remove(clickedObject);
                     originalBounds.Remove(clickedObject);
                 }
                 else
                 {
-                    // Thêm vào danh sách chọn
+                  
                     if (!selectedObjects.Contains(clickedObject))
                     {
                         selectedObjects.Add(clickedObject);
@@ -928,7 +978,7 @@ namespace Paint
 
         private clsDrawObject FindObjectAtLocation(List<clsDrawObject> objects, Point location)
         {
-            // Kiểm tra từng object từ trên xuống (để chọn object trên cùng)
+            
             foreach (var obj in objects.Reverse<clsDrawObject>())
             {
                 if (obj is clsDuongCong duongCong)
@@ -950,28 +1000,28 @@ namespace Paint
         {
             if (!HasSelection) return ResizeHandle.None;
 
-            // Chỉ scale khi chọn 1 đối tượng
+          
             if (selectedObjects.Count != 1) return ResizeHandle.None;
 
             var bounds = GetObjectBounds(selectedObjects[0]);
 
-            // Tạo các handle (ô vuông nhỏ) ở các vị trí
+          
             Rectangle[] handles = {
-        new Rectangle(bounds.Left - HandleSize/2, bounds.Top - HandleSize/2, HandleSize, HandleSize), // TopLeft
-        new Rectangle(bounds.Left + bounds.Width/2 - HandleSize/2, bounds.Top - HandleSize/2, HandleSize, HandleSize), // Top
-        new Rectangle(bounds.Right - HandleSize/2, bounds.Top - HandleSize/2, HandleSize, HandleSize), // TopRight
-        new Rectangle(bounds.Left - HandleSize/2, bounds.Top + bounds.Height/2 - HandleSize/2, HandleSize, HandleSize), // Left
-        new Rectangle(bounds.Right - HandleSize/2, bounds.Top + bounds.Height/2 - HandleSize/2, HandleSize, HandleSize), // Right
-        new Rectangle(bounds.Left - HandleSize/2, bounds.Bottom - HandleSize/2, HandleSize, HandleSize), // BottomLeft
-        new Rectangle(bounds.Left + bounds.Width/2 - HandleSize/2, bounds.Bottom - HandleSize/2, HandleSize, HandleSize), // Bottom
-        new Rectangle(bounds.Right - HandleSize/2, bounds.Bottom - HandleSize/2, HandleSize, HandleSize)  // BottomRight
-    };
+                new Rectangle(bounds.Left - HandleSize/2, bounds.Top - HandleSize/2, HandleSize, HandleSize), // TopLeft
+                new Rectangle(bounds.Left + bounds.Width/2 - HandleSize/2, bounds.Top - HandleSize/2, HandleSize, HandleSize), // Top
+                new Rectangle(bounds.Right - HandleSize/2, bounds.Top - HandleSize/2, HandleSize, HandleSize), // TopRight
+                new Rectangle(bounds.Left - HandleSize/2, bounds.Top + bounds.Height/2 - HandleSize/2, HandleSize, HandleSize), // Left
+                new Rectangle(bounds.Right - HandleSize/2, bounds.Top + bounds.Height/2 - HandleSize/2, HandleSize, HandleSize), // Right
+                new Rectangle(bounds.Left - HandleSize/2, bounds.Bottom - HandleSize/2, HandleSize, HandleSize), // BottomLeft
+                new Rectangle(bounds.Left + bounds.Width/2 - HandleSize/2, bounds.Bottom - HandleSize/2, HandleSize, HandleSize), // Bottom
+                new Rectangle(bounds.Right - HandleSize/2, bounds.Bottom - HandleSize/2, HandleSize, HandleSize)  // BottomRight
+            };
 
-            // Kiểm tra điểm click có nằm trong handle nào không
+            
             for (int i = 0; i < handles.Length; i++)
             {
                 if (handles[i].Contains(point))
-                    return (ResizeHandle)(i + 1); // +1 vì enum bắt đầu từ 1
+                    return (ResizeHandle)(i + 1); 
             }
 
             return ResizeHandle.None;
@@ -993,7 +1043,7 @@ namespace Paint
         {
             if (obj is clsGroup group)
             {
-                // Kiểm tra từng đối tượng trong group
+              
                 foreach (var innerObj in group.GetObjects())
                 {
                     if (IsPointInObject(innerObj, point)) return true;
@@ -1060,7 +1110,7 @@ namespace Paint
 
             foreach (var obj in selectedObjects)
             {
-                obj.Move(deltaX, deltaY); // Gọi phương thức Move chung
+                obj.Move(deltaX, deltaY); 
             }
 
             selectionStartPoint = newLocation;
@@ -1079,7 +1129,7 @@ namespace Paint
                     g.DrawRectangle(selectionPen, bounds);
                 }
 
-                // Vẽ handle nếu là 1 đối tượng (bao gồm cả group)
+                
                 if (selectedObjects.Count == 1)
                 {
                     DrawResizeHandles(g, bounds);
@@ -1213,14 +1263,14 @@ namespace Paint
             var obj = selectedObjects[0];
             var bounds = GetObjectBounds(obj);
 
-            // Đảm bảo kích thước tối thiểu
+           
             if (bounds.Width < 2 || bounds.Height < 2) return;
 
             float scaleX = 1f, scaleY = 1f;
             PointF origin = PointF.Empty;
             bool maintainAspectRatio = (Control.ModifierKeys & Keys.Shift) == Keys.Shift;
 
-            // Tính toán tỷ lệ scale dựa trên handle được kéo
+        
             switch (handle)
             {
                 case ResizeHandle.TopLeft:
@@ -1269,7 +1319,7 @@ namespace Paint
                     break;
             }
 
-            // Giới hạn tỷ lệ scale hợp lý
+            
             scaleX = Math.Max(0.1f, Math.Min(scaleX, 10f));
             scaleY = Math.Max(0.1f, Math.Min(scaleY, 10f));
 
@@ -1310,7 +1360,7 @@ namespace Paint
                     Point newP1 = ScalePoint(obj.p1, scaleX, scaleY, origin);
                     Point newP2 = ScalePoint(obj.p2, scaleX, scaleY, origin);
 
-                    // Kiểm tra kích thước tối thiểu sau scale
+                    
                     if (Math.Abs(newP2.X - newP1.X) >= 2 && Math.Abs(newP2.Y - newP1.Y) >= 2)
                     {
                         obj.p1 = newP1;
@@ -1327,11 +1377,11 @@ namespace Paint
 
         private Point ScalePoint(Point point, float scaleX, float scaleY, PointF origin)
         {
-            // Tính toán vị trí mới
+        
             float newX = origin.X + (point.X - origin.X) * scaleX;
             float newY = origin.Y + (point.Y - origin.Y) * scaleY;
 
-            // Làm tròn và đảm bảo giá trị không âm
+            
             return new Point(
                 (int)Math.Round(Math.Max(0, newX)),
                 (int)Math.Round(Math.Max(0, newY))
@@ -1343,18 +1393,20 @@ namespace Paint
         {
             if (selectedObjects.Count < 2) return;
 
-            // Tạo group mới và thêm TRỰC TIẾP các đối tượng được chọn vào
+            
             var newGroup = new clsGroup();
 
             foreach (var obj in selectedObjects)
             {
-                newGroup.AddObject(obj); // Thêm cả group con nếu có
+                newGroup.AddObject(obj); 
                 allObjects.Remove(obj);
             }
 
             allObjects.Add(newGroup);
 
-            // Chọn group mới
+            newGroup.UpdateBounds();
+
+           
             selectedObjects.Clear();
             selectedObjects.Add(newGroup);
             originalBounds.Clear();
@@ -1368,19 +1420,18 @@ namespace Paint
                 return;
             }
 
-            // Lấy tất cả các đối tượng TRỰC TIẾP trong group
+            
             var children = group.GroupedObjects.ToList();
 
-            // Thêm tất cả ra ngoài
+          
             foreach (var child in children)
             {
                 allObjects.Add(child);
             }
 
-            // Xóa group hiện tại
+      
             allObjects.Remove(group);
 
-            // Cập nhật selection (chọn tất cả các đối tượng vừa được ungroup)
             selectedObjects.Clear();
             originalBounds.Clear();
 
