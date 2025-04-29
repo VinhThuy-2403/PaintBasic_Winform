@@ -30,6 +30,7 @@
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
             this.plMain = new System.Windows.Forms.Panel();
+            this.btnColor2 = new System.Windows.Forms.Button();
             this.panel2 = new System.Windows.Forms.Panel();
             this.btnUnGroup = new System.Windows.Forms.Button();
             this.btnGroup = new System.Windows.Forms.Button();
@@ -59,6 +60,7 @@
             this.btnColor = new System.Windows.Forms.Button();
             this.btnEllipse = new System.Windows.Forms.Button();
             this.colorDialog1 = new System.Windows.Forms.ColorDialog();
+            this.label12 = new System.Windows.Forms.Label();
             this.panel2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numDoday)).BeginInit();
             this.SuspendLayout();
@@ -75,9 +77,20 @@
             this.plMain.MouseMove += new System.Windows.Forms.MouseEventHandler(this.plMain_MouseMove);
             this.plMain.MouseUp += new System.Windows.Forms.MouseEventHandler(this.plMain_MouseUp);
             // 
+            // btnColor2
+            // 
+            this.btnColor2.Location = new System.Drawing.Point(717, 62);
+            this.btnColor2.Name = "btnColor2";
+            this.btnColor2.Size = new System.Drawing.Size(48, 45);
+            this.btnColor2.TabIndex = 29;
+            this.btnColor2.UseVisualStyleBackColor = true;
+            this.btnColor2.Click += new System.EventHandler(this.button2_Click);
+            // 
             // panel2
             // 
             this.panel2.BackColor = System.Drawing.SystemColors.GradientActiveCaption;
+            this.panel2.Controls.Add(this.label12);
+            this.panel2.Controls.Add(this.btnColor2);
             this.panel2.Controls.Add(this.btnUnGroup);
             this.panel2.Controls.Add(this.btnGroup);
             this.panel2.Controls.Add(this.btnDelete);
@@ -147,7 +160,7 @@
             // 
             this.label11.AutoSize = true;
             this.label11.Font = new System.Drawing.Font("Microsoft Sans Serif", 8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label11.Location = new System.Drawing.Point(656, 67);
+            this.label11.Location = new System.Drawing.Point(656, 118);
             this.label11.Name = "label11";
             this.label11.Size = new System.Drawing.Size(47, 20);
             this.label11.TabIndex = 26;
@@ -172,7 +185,7 @@
             "Solid",
             "Hatch",
             "Gradient"});
-            this.cbBrushType.Location = new System.Drawing.Point(709, 66);
+            this.cbBrushType.Location = new System.Drawing.Point(717, 115);
             this.cbBrushType.Name = "cbBrushType";
             this.cbBrushType.Size = new System.Drawing.Size(132, 28);
             this.cbBrushType.TabIndex = 24;
@@ -201,7 +214,7 @@
             // 
             this.btnFillColor.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("btnFillColor.BackgroundImage")));
             this.btnFillColor.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
-            this.btnFillColor.Location = new System.Drawing.Point(709, 8);
+            this.btnFillColor.Location = new System.Drawing.Point(717, 6);
             this.btnFillColor.Name = "btnFillColor";
             this.btnFillColor.Size = new System.Drawing.Size(48, 50);
             this.btnFillColor.TabIndex = 21;
@@ -417,6 +430,17 @@
             this.btnEllipse.UseVisualStyleBackColor = false;
             this.btnEllipse.Click += new System.EventHandler(this.btnEllipse_Click);
             // 
+            // label12
+            // 
+            this.label12.AutoSize = true;
+            this.label12.Font = new System.Drawing.Font("Microsoft Sans Serif", 8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label12.Location = new System.Drawing.Point(656, 75);
+            this.label12.Name = "label12";
+            this.label12.Size = new System.Drawing.Size(51, 20);
+            this.label12.TabIndex = 30;
+            this.label12.Text = "Color";
+            this.label12.Click += new System.EventHandler(this.label12_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
@@ -466,6 +490,8 @@
         private System.Windows.Forms.Button btnDelete;
         private System.Windows.Forms.Button btnGroup;
         private System.Windows.Forms.Button btnUnGroup;
+        private System.Windows.Forms.Button btnColor2;
+        private System.Windows.Forms.Label label12;
     }
 }
 

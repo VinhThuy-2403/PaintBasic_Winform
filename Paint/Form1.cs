@@ -47,7 +47,7 @@ namespace Paint
 
         
         private BrushType CurrentBrushType = BrushType.Solid;
-        private Color secondaryColor = Color.White;
+        private Color secondaryColor;
         private HatchStyle currentHatchStyle = HatchStyle.Cross;
         private float gradientAngle = 45f;
 
@@ -61,7 +61,9 @@ namespace Paint
             InitializeComponent();
             gp = this.plMain.CreateGraphics();
             myColor = Color.Blue;
-            this.btnColor.BackColor = Color.Blue;
+            this.btnColor.BackColor = myColor;
+            secondaryColor = Color.Red;
+            this.btnColor2.BackColor = secondaryColor;
             this.penWidth = 2; //Độ dày mặc định
             numDoday.Value = penWidth;
             cbBrushType.SelectedIndex = 0;
@@ -354,6 +356,8 @@ namespace Paint
             plMain.Invalidate();
         }
 
+        
+
         private void plMain_MouseMove(object sender, MouseEventArgs e)
         {
             if (this.isPress)
@@ -383,6 +387,11 @@ namespace Paint
                     plMain.Invalidate();
                 }
             }
+
+        }
+
+        private void label12_Click(object sender, EventArgs e)
+        {
 
         }
 
@@ -439,6 +448,21 @@ namespace Paint
 
             colorDialog.Dispose();
         }
+
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            ColorDialog colorDialog = new ColorDialog();
+
+            if (colorDialog.ShowDialog() == DialogResult.OK)
+            {
+                secondaryColor = colorDialog.Color;
+                btnColor2.BackColor = secondaryColor;
+            }
+
+            colorDialog.Dispose();
+        }
+
     }
 
 
@@ -484,7 +508,7 @@ namespace Paint
                            this.GradientAngle);
 
                 default: // Solid
-                    return new SolidBrush(myPen.Color);
+                    return new SolidBrush(this.SecondaryColor);
             }
         }
         public virtual Rectangle GetBounds()
